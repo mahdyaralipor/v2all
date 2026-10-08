@@ -541,6 +541,15 @@ def main():
         f.write("\n".join(x[0] for x in final) + "\n")
     with open(f"{a.out}/real_sub.txt", "w") as f:
         f.write(sub_b64)
+    data = {"updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "stats": {"sources": len(SOURCES), "raw": len(raw), "unique": len(uniq),
+                      "tcp_alive": len(alive), "real_alive": len(real)},
+            "configs": [{"proto": x[1], "host": x[2], "port": x[3],
+                         "remark": x[4], "ms": round(x[-1]), "link": x[0]}
+                        for x in final]}
+    os.makedirs(os.path.join(a.out, "docs"), exist_ok=True)
+    with open(os.path.join(a.out, "docs", "data.json"), "w") as f:
+        json.dump(data, f)
 
     print(f"\n{C['b']}TOP {len(final)}:{C['x']}")
     for x in final:

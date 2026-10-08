@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v2all — working free V2Ray subscription</title>
+<style>
+:root{--bg:#0b0f14;--card:#131a23;--line:#1f2a37;--txt:#dbe4ee;--dim:#8b98a9;
+--acc:#22d3ee;--grn:#4ade80;--yel:#facc15;--red:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:24px 16px 64px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:26px;margin:0}
+.badge{font-size:12px;padding:2px 10px;border-radius:99px;border:1px solid var(--grn);color:var(--grn)}
+.dim{color:var(--dim)}.small{font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card b{font-size:24px;display:block}.card span{color:var(--dim);font-size:13px}
+.card.hot b{color:var(--grn)}
+.funnel{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line);margin:4px 0 20px}
+.funnel div{height:100%}
+.subbox{background:var(--card);border:1px solid var(--acc);border-radius:12px;padding:16px;margin:20px 0}
+.subbox code{display:block;word-break:break-all;background:#0a0e13;border:1px solid var(--line);
+border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;color:var(--acc)}
+button{cursor:pointer;border:1px solid var(--acc);background:transparent;color:var(--acc);
+border-radius:8px;padding:8px 16px;font-size:14px}
+button:hover{background:var(--acc);color:#04222a}
+button.mini{padding:2px 10px;font-size:12px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 12px}
+.toolbar input{flex:1;min-width:180px;background:var(--card);border:1px solid var(--line);
+border-radius:8px;color:var(--txt);padding:8px 12px;font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);color:var(--dim);border-radius:99px;padding:4px 14px;font-size:13px;background:none}
+.chip.on{border-color:var(--acc);color:var(--acc)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--dim);font-weight:600;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.proto{font-size:12px;padding:1px 8px;border-radius:99px;background:#1c2836;color:var(--acc)}
+.host{font-family:ui-monospace,monospace;font-size:13px}
+.remark{color:var(--dim);font-size:13px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lat{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.latbar{height:6px;border-radius:99px;background:var(--grn);min-width:4px}
+footer{margin-top:36px;color:var(--dim);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+a{color:var(--acc)}
+@media(max-width:640px){.remark{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>⚡ v2all</h1><span class="badge">● LIVE</span>
+<span class="dim small" id="updated">loading…</span>
+<a class="dim small" id="repo" href="https://github.com/mahdyaralipor/v2all" style="margin-left:auto">GitHub ↗</a>
+</header>
+<p class="dim">Free V2Ray configs, really tested — every entry below proxied a real request
+through <b>xray-core</b> minutes ago. TCP-open alone proves nothing, so we don't ship that.</p>
+<div class="cards" id="cards"></div>
+<div class="funnel" id="funnel"></div>
+<div class="subbox">
+<b>📋 Subscription — paste into v2rayNG / Hiddify / v2rayN</b>
+<code id="suburl">…</code>
+<button id="copysub">Copy subscription URL</button>
+</div>
+<div class="toolbar">
+<input id="q" placeholder="Search host or remark…">
+<div class="chips" id="chips"></div>
+</div>
+<table><thead><tr><th>#</th><th>Proto</th><th>Server</th><th>Remark</th><th>Latency</th><th></th></tr></thead>
+<tbody id="rows"></tbody></table>
+<footer>Auto-refreshed every 6 hours by GitHub Actions. These are public third-party
+servers — don't use them for anything sensitive. Re-run anytime:
+<code>./v2all.py</code> · <a id="srclink" href="https://github.com/mahdyaralipor/v2all">source</a></footer>
+</div>
+<script>
+let DATA={configs:[],stats:{}};
+let proto='all';
+const $=id=>document.getElementById(id);
+function ago(s){const m=Math.max(0,(Date.now()-new Date(s))/6e4);
+if(m<1)return'just now';if(m<60)return Math.floor(m)+' min ago';
+const h=m/60;if(h<24)return Math.floor(h)+' h ago';return Math.floor(h/24)+' d ago';}
+function latColor(ms){return ms<600?'var(--grn)':ms<1000?'var(--yel)':'var(--red)';}
+async function copyText(t,btn){try{await navigator.clipboard.writeText(t);}
+catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);
+ta.select();document.execCommand('copy');ta.remove();}
+const o=btn.textContent;btn.textContent='✓';setTimeout(()=>btn.textContent=o,1200);}
+function render(){
+const s=DATA.stats;
+$('updated').textContent='updated '+ago(DATA.updated);
+$('cards').innerHTML=
+`<div class="card"><b>${s.sources??'–'}</b><span>sources</span></div>
+<div class="card"><b>${(s.raw??0).toLocaleString()}</b><span>raw configs</span></div>
+<div class="card"><b>${(s.unique??0).toLocaleString()}</b><span>unique</span></div>
+<div class="card"><b>${(s.tcp_alive??0).toLocaleString()}</b><span>TCP alive</span></div>
+<div class="card hot"><b>${(s.real_alive??0).toLocaleString()}</b><span>really working ✓</span></div>`;
+const mx=Math.max(s.raw||1,s.unique||1,s.tcp_alive||1,s.real_alive||1);
+$('funnel').innerHTML=
+`<div style="width:${100*(s.raw||0)/mx}%;background:#334155"></div>
+<div style="width:${100*(s.unique||0)/mx}%;background:#0e7490"></div>
+<div style="width:${100*(s.tcp_alive||0)/mx}%;background:var(--acc)"></div>
+<div style="width:${100*(s.real_alive||0)/mx}%;background:var(--grn)"></div>`;
+const m=location.href.match(/https?:\/\/([^.]+)\.github\.io\/([^\/]+)/);
+const sub=m?`https://raw.githubusercontent.com/${m[1]}/${m[2]}/main/real_sub.txt`:'real_sub.txt';
+$('suburl').textContent=sub;
+$('copysub').onclick=e=>copyText(sub,e.target);
+const protos=['all',...new Set(DATA.configs.map(c=>c.proto))];
+$('chips').innerHTML=protos.map(p=>
+`<button class="chip${p===proto?' on':''}" data-p="${p}">${p}</button>`).join('');
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{proto=b.dataset.p;render();});
+const q=$('q').value.toLowerCase();
+const rows=DATA.configs.filter(c=>(proto==='all'||c.proto===proto)&&
+(!q||(c.host+c.remark).toLowerCase().includes(q)));
+const maxMs=Math.max(...rows.map(c=>c.ms),1);
+$('rows').innerHTML=rows.map((c,i)=>
+`<tr><td class="dim">${i+1}</td><td><span class="proto">${c.proto}</span></td>
+<td class="host">${c.host}:${c.port}</td><td class="remark" title="${c.remark}">${c.remark}</td>
+<td><span class="lat"><span class="latbar" style="width:${Math.max(4,60*c.ms/maxMs)}px;background:${latColor(c.ms)}"></span>${c.ms} ms</span></td>
+<td><button class="mini" data-i="${DATA.configs.indexOf(c)}">copy</button></td></tr>`).join('')
+||'<tr><td colspan="6" class="dim">no matches</td></tr>';
+document.querySelectorAll('button.mini').forEach(b=>b.onclick=
+e=>copyText(DATA.configs[+b.dataset.i].link,e.target));}
+$('q').oninput=render;
+fetch('data.json').then(r=>r.json()).then(d=>{DATA=d;render();})
+.catch(()=>{$('updated').textContent='data.json not found';});
+</script>
+</body>
+</html>

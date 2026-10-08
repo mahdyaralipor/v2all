@@ -6,6 +6,8 @@ One command to turn public free-V2Ray config lists into a **working subscription
 
 ## 🚀 Live subscription (auto-refreshed every 6h)
 
+📊 **Dashboard:** https://mahdyaralipor.github.io/v2all/
+
 Paste as subscription in v2rayNG / Hiddify / v2rayN:
 
 ```
