@@ -1,0 +1,40 @@
+name: refresh-sub
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      pool:
+        description: "TCP-best sent to real test"
+        default: "300"
+      top:
+        description: "final sub size"
+        default: "50"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-sub
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: run v2all
+        run: ./v2all.py --pool "${{ inputs.pool || 300 }}" --top "${{ inputs.top || 50 }}" --no-publish
+      - name: commit sub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f real_sub.txt real_working.txt
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "auto: refresh subscription ($(date -u +%F_%T))"
+          git push

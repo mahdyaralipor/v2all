@@ -1,6 +1,19 @@
 # v2all
 
+[![refresh-sub](https://github.com/mahdyaralipor/v2all/actions/workflows/update-sub.yml/badge.svg)](https://github.com/mahdyaralipor/v2all/actions/workflows/update-sub.yml)
+
 One command to turn public free-V2Ray config lists into a **working subscription**.
+
+## 🚀 Live subscription (auto-refreshed every 6h)
+
+Paste as subscription in v2rayNG / Hiddify / v2rayN:
+
+```
+https://raw.githubusercontent.com/mahdyaralipor/v2all/main/real_sub.txt
+```
+
+Run it yourself: `./v2all.py --pool 300 --top 30` — or fork this repo,
+then Actions → `refresh-sub` → Run workflow (works on forks too).
 
 ```
 ./v2all.py --pool 300 --top 30
