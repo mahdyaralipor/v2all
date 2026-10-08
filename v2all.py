@@ -333,6 +333,30 @@ def gh_run(*args):
     return subprocess.run(["gh"] + list(args), capture_output=True, text=True)
 
 
+def latest_xray_tag():
+    """Resolve latest Xray-core tag without API (runner IPs are often rate-limited)."""
+    try:
+        with urllib.request.urlopen(urllib.request.Request(
+                "https://github.com/XTLS/Xray-core/releases/latest",
+                headers={"User-Agent": "v2all"}), timeout=25) as r:
+            tag = r.geturl().rstrip("/").rsplit("/", 1)[-1]
+            if tag.startswith("v"):
+                return tag
+    except Exception:
+        pass
+    try:
+        headers = {"User-Agent": "v2all"}
+        tok = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+        if tok:
+            headers["Authorization"] = f"Bearer {tok}"
+        with urllib.request.urlopen(urllib.request.Request(
+                "https://api.github.com/repos/XTLS/Xray-core/releases/latest",
+                headers=headers), timeout=25) as r:
+            return json.load(r)["tag_name"]
+    except Exception:
+        return None
+
+
 def ensure_xray():
     """Use bundled xray-core, or download it on first run (linux x64/arm64)."""
     if os.path.isfile(XRAY) and os.access(XRAY, os.X_OK):
@@ -345,11 +369,9 @@ def ensure_xray():
               f"put an xray binary at bin/xray{C['x']}")
         return False
     try:
-        req = urllib.request.Request(
-            "https://api.github.com/repos/XTLS/Xray-core/releases/latest",
-            headers={"User-Agent": "v2all"})
-        with urllib.request.urlopen(req, timeout=25) as r:
-            tag = json.load(r)["tag_name"]
+        tag = latest_xray_tag()
+        if not tag:
+            raise RuntimeError("could not resolve latest xray-core release")
         os.makedirs(os.path.join(HERE, "bin"), exist_ok=True)
         zpath = os.path.join(HERE, "bin", "xray.zip")
         urllib.request.urlretrieve(

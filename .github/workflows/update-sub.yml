@@ -29,6 +29,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: run v2all
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./v2all.py --pool "${{ inputs.pool || 300 }}" --top "${{ inputs.top || 50 }}" --no-publish
       - name: commit sub
         run: |
