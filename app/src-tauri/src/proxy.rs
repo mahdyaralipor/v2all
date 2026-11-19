@@ -11,7 +11,7 @@ mod platform {
 
     const KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings";
 
-    #[derive(Default)]
+    #[derive(Default, serde::Serialize, serde::Deserialize)]
     pub struct Previous {
         enabled: u32,
         server: String,
@@ -63,7 +63,7 @@ mod platform {
 mod platform {
     use std::process::Command;
 
-    #[derive(Default)]
+    #[derive(Default, serde::Serialize, serde::Deserialize)]
     pub struct Previous {
         mode: String,
     }
@@ -120,7 +120,7 @@ mod platform {
 
 #[cfg(not(any(windows, target_os = "linux")))]
 mod platform {
-    #[derive(Default)]
+    #[derive(Default, serde::Serialize, serde::Deserialize)]
     pub struct Previous;
 
     pub fn enable() -> Result<Previous, String> {

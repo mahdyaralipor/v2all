@@ -50,11 +50,37 @@ impl AppState {
                 let _ = tunnel.child.kill();
                 let _ = tunnel.child.wait();
                 if let Some(previous) = tunnel.previous_proxy.as_ref() {
-                    proxy::restore(previous);
+                    restore_proxy(&self.dir, previous);
                 }
             }
         }
     }
+}
+
+const PROXY_BACKUP: &str = "proxy-backup.json";
+
+/// Remember what the system proxy looked like, so an unclean exit can still be
+/// repaired on the next launch (the settings are machine-wide).
+fn remember_proxy(dir: &std::path::Path, previous: &proxy::Previous) {
+    if let Ok(text) = serde_json::to_string(previous) {
+        let _ = std::fs::write(dir.join(PROXY_BACKUP), text);
+    }
+}
+
+fn restore_proxy(dir: &std::path::Path, previous: &proxy::Previous) {
+    proxy::restore(previous);
+    let _ = std::fs::remove_file(dir.join(PROXY_BACKUP));
+}
+
+fn recover_proxy(dir: &std::path::Path) {
+    let path = dir.join(PROXY_BACKUP);
+    let Ok(text) = std::fs::read_to_string(&path) else {
+        return;
+    };
+    if let Ok(previous) = serde_json::from_str::<proxy::Previous>(&text) {
+        proxy::restore(&previous);
+    }
+    let _ = std::fs::remove_file(path);
 }
 
 #[tauri::command]
@@ -146,7 +172,10 @@ async fn connect(
 
     let mut notes: Vec<String> = Vec::new();
     let previous_proxy = match proxy::enable() {
-        Ok(previous) => Some(previous),
+        Ok(previous) => {
+            remember_proxy(&dir, &previous);
+            Some(previous)
+        }
         Err(error) => {
             notes.push(format!(
                 "The tunnel is up, but the system proxy wasn't changed ({error}). \
@@ -164,7 +193,7 @@ async fn connect(
         let _ = child.kill();
         let _ = child.wait();
         if let Some(previous) = previous_proxy.as_ref() {
-            proxy::restore(previous);
+            restore_proxy(&dir, previous);
         }
         return Err(format!(
             "The tunnel started, but the server didn't carry traffic ({error}). Try another config."
@@ -204,7 +233,7 @@ fn stop(state: &AppState) {
         let _ = tunnel.child.kill();
         let _ = tunnel.child.wait();
         if let Some(previous) = tunnel.previous_proxy.as_ref() {
-            proxy::restore(previous);
+            restore_proxy(&state.dir, previous);
         }
     }
 }
@@ -221,7 +250,7 @@ fn connection_status(state: State<'_, AppState>) -> Option<Connection> {
         if matches!(tunnel.child.try_wait(), Ok(Some(_))) {
             let dead = guard.take()?;
             if let Some(previous) = dead.previous_proxy.as_ref() {
-                proxy::restore(previous);
+                restore_proxy(&state.dir, previous);
             }
             return None;
         }
@@ -289,6 +318,7 @@ pub fn run() {
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
+            recover_proxy(&dir);
             app.manage(AppState {
                 dir,
                 tunnel: Mutex::new(None),
@@ -336,6 +366,14 @@ mod tests {
         assert_eq!(config["inbounds"][1]["port"], proxy::HTTP_PORT);
         assert_eq!(config["outbounds"][0]["protocol"], "trojan");
         assert_eq!(config["routing"]["rules"][0]["outboundTag"], "direct");
+    }
+
+    #[test]
+    fn proxy_backup_round_trips() {
+        let previous = proxy::Previous::default();
+        let text = serde_json::to_string(&previous).unwrap();
+        let restored: proxy::Previous = serde_json::from_str(&text).unwrap();
+        assert_eq!(serde_json::to_string(&restored).unwrap(), text);
     }
 
     #[test]
