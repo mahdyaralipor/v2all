@@ -1,3 +1,9 @@
 bin/
 *.txt
 __pycache__/
+
+# landing source / build output (deployed copy lives in docs/index.html)
+node_modules/
+dist/
+.playwright-mcp/
+!landing/src/assets/OFL.txt

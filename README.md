@@ -6,7 +6,10 @@ One command to turn public free-V2Ray config lists into a **working subscription
 
 ## 🚀 Live subscription (auto-refreshed every 6h)
 
-📊 **Dashboard:** https://mahdyaralipor.github.io/v2all/
+🔗 **Landing / subscription:** https://mahdyaralipor.github.io/v2all/
+📊 **Live data:** https://mahdyaralipor.github.io/v2all/dashboard.html
+
+The static landing is built from `landing/`; see `landing/README.md` to rebuild it after editing.
 
 Paste as subscription in v2rayNG / Hiddify / v2rayN:
 
