@@ -15,8 +15,8 @@ fn asset() -> Result<&'static str, String> {
         ("windows", "aarch64") => "Xray-windows-arm64-v8a.zip",
         ("linux", "x86_64") => "Xray-linux-64.zip",
         ("linux", "aarch64") => "Xray-linux-arm64-v8a.zip",
-        ("macos", "x86_64") => "Xray-macOS-64.zip",
-        ("macos", "aarch64") => "Xray-macOS-arm64-v8a.zip",
+        ("macos", "x86_64") => "Xray-macos-64.zip",
+        ("macos", "aarch64") => "Xray-macos-arm64-v8a.zip",
         (os, arch) => return Err(format!("There is no Xray build for {os}/{arch}.")),
     })
 }
