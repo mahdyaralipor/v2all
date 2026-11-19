@@ -193,6 +193,8 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .live-proxy {
