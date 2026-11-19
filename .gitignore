@@ -7,3 +7,10 @@ node_modules/
 dist/
 .playwright-mcp/
 !landing/src/assets/OFL.txt
+!app/src/assets/OFL.txt
+
+# desktop app build output
+app/src-tauri/target/
+app/src-tauri/gen/
+app/src-tauri/icons/android/
+app/src-tauri/icons/ios/

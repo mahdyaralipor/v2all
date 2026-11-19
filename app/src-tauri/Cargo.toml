@@ -1,0 +1,30 @@
+[package]
+name = "v2all-app"
+version = "0.1.0"
+description = "v2all desktop"
+authors = ["mahdyaralipor"]
+edition = "2021"
+
+[lib]
+name = "v2all_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "gzip", "socks"] }
+tokio = { version = "1", features = ["net", "time"] }
+base64 = "0.22"
+url = "2"
+percent-encoding = "2"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+windows-sys = { version = "0.59", features = ["Win32_Networking_WinInet", "Win32_Foundation"] }

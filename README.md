@@ -11,6 +11,18 @@ One command to turn public free-V2Ray config lists into a **working subscription
 
 The static landing is built from `landing/`; see `landing/README.md` to rebuild it after editing.
 
+## 🖥️ Desktop app (Windows + Linux)
+
+The same list as a native app: latency tests from your own network and one-click
+connect through a local Xray proxy. Grab the latest `.exe` / `.deb` from the
+[desktop app workflow](../../actions/workflows/app.yml) artifacts, or build it
+yourself — see `app/README.md`.
+
+On connect it runs Xray locally (`127.0.0.1:10809` HTTP, `127.0.0.1:10808`
+SOCKS) and switches the system proxy to it; Disconnect puts the previous proxy
+settings back. Nothing is installed as a service and no traffic leaves the
+machine except through the server you picked.
+
 Paste as subscription in v2rayNG / Hiddify / v2rayN:
 
 ```
